@@ -8,8 +8,12 @@ HAND_MODEL_PATH = os.path.join(MODELS_DIR, 'hand_landmarker.task')
 FACE_DETECTOR_PATH = os.path.join(MODELS_DIR, 'blaze_face_short_range.tflite')
 
 # Limits
-MAX_PLAYERS = 3
+MAX_PLAYERS = 1
 HAND_MIN_CONFIDENCE = 0.5
+FACE_MATCH_MAX_DIST = 0.2
+HAND_ASSIGN_MAX_DIST = 0.3
+MEMORY_TTL_FRAMES = 30
+EYE_HEIGHT_RATIO = 0.35
 
 # UI Colors
 COLOR_RED = (0, 0, 255)
