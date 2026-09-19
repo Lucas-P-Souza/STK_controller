@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
 import sys
+import os
+import time
 import socket
-from pynput.keyboard import Key, Controller
+import keyboard
+
+# Exigir sudo no Linux para injeção de hardware
+if os.geteuid() != 0:
+    print("\033[91mErro: Este script manipula eventos de hardware e precisa ser executado como root (sudo).\x1b[0m")
+    sys.exit(1)
 
 GREEN = '\033[92m'
 WHITE = '\x1b[0m'
@@ -15,23 +22,23 @@ address = ('localhost', 6006)
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(address)
 
-keyboard = Controller()
-
 def human_tap(key):
-    """Vulnerable Wayland tap implementation using pynput."""
-    keyboard.tap(key)
+    """Milagrosa função de tap que burla o Wayland e os 60FPS do jogo!"""
+    keyboard.press(key)
+    time.sleep(0.05) # Delay crucial para o jogo registrar o frame
+    keyboard.release(key)
 
-# Hardware level bindings
+# Hardware level bindings com a lib 'keyboard'
 bindings = [
-    ['P_LEFT', Key.left, keyboard.press],
-    ['R_LEFT', Key.left, keyboard.release],
-    ['P_RIGHT', Key.right, keyboard.press],
-    ['R_RIGHT', Key.right, keyboard.release],
-    ['RESCUE', Key.backspace, human_tap],
-    ['P_ACCELERATE', Key.up, keyboard.press],
-    ['R_ACCELERATE', Key.up, keyboard.release],
-    ['P_BRAKE', Key.down, keyboard.press],
-    ['R_BRAKE', Key.down, keyboard.release]
+    ['P_LEFT', 'left', keyboard.press],
+    ['R_LEFT', 'left', keyboard.release],
+    ['P_RIGHT', 'right', keyboard.press],
+    ['R_RIGHT', 'right', keyboard.release],
+    ['RESCUE', 'backspace', human_tap],
+    ['P_ACCELERATE', 'up', keyboard.press],
+    ['R_ACCELERATE', 'up', keyboard.release],
+    ['P_BRAKE', 'down', keyboard.press],
+    ['R_BRAKE', 'down', keyboard.release]
 ]
 
 commands = [b[0] for b in bindings]
@@ -41,7 +48,7 @@ if len(sys.argv) > 1:
         if sys.argv[i] == '-d':
             DEBUG = True
 
-print('\nSTK Keyboard Emulator Server (pynput version) started ', end='')
+print('\nSTK Keyboard Emulator Server (Hardware Level) started ', end='')
 if DEBUG:
     print(GREEN + '(Debug mode)' + WHITE)
 print()
