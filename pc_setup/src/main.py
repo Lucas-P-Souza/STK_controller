@@ -35,8 +35,8 @@ def main():
         faces, hands = tracker.process_frame(rgb_frame, gray_frame)
         hand_boxes = tracker.get_hand_boxes(hands, frame.shape[1], frame.shape[0])
 
-        # Core logic evaluation (Binary collision version)
-        action_text, action_color = logic.update(faces, hand_boxes, frame.shape[1], frame.shape[0])
+        # Core logic evaluation (PWM analog version)
+        action_text, action_color, steering_vals = logic.update(faces, hand_boxes, frame.shape[1], frame.shape[0])
 
         # Draw detected faces
         for (x, y, w, h) in faces:
@@ -51,6 +51,19 @@ def main():
 
         # Draw digital action
         cv2.putText(frame, action_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, action_color, 2)
+
+        # Draw PWM steering bar for Player 0 (Testing mode)
+        bar_x, bar_y, bar_w, bar_h = 50, 80, 400, 30
+        cv2.rectangle(frame, (bar_x, bar_y), (bar_x + bar_w, bar_y + bar_h), config.COLOR_WHITE, 2)
+        
+        # Calculate fill (steering_vals[0] is between -1.0 and 1.0)
+        center_x = bar_x + bar_w // 2
+        fill_width = int(steering_vals[0] * (bar_w // 2))
+        
+        if fill_width > 0:
+            cv2.rectangle(frame, (center_x, bar_y), (center_x + fill_width, bar_y + bar_h), config.COLOR_GREEN, cv2.FILLED)
+        elif fill_width < 0:
+            cv2.rectangle(frame, (center_x + fill_width, bar_y), (center_x, bar_y + bar_h), config.COLOR_GREEN, cv2.FILLED)
 
         cv2.imshow('STK Controller - Logic', frame)
 

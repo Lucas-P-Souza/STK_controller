@@ -3,6 +3,9 @@ from src import config
 class PlayerStateController:
     def __init__(self):
         self.active_players = config.MAX_PLAYERS
+        self.steering_vals = {0: 0.0, 1: 0.0, 2: 0.0}
+        self.last_faces = []
+        self.face_ttl = 0
 
     def set_player_mode(self, num_players):
         if num_players in [1, 2, 3]:
@@ -16,6 +19,14 @@ class PlayerStateController:
         return [(left_eye_x, eye_y), (right_eye_x, eye_y)]
 
     def update(self, faces, hand_boxes, width, height):
+        # --- Memory Mechanism for Occlusion ---
+        if len(faces) > 0:
+            self.last_faces = faces
+            self.face_ttl = config.MEMORY_TTL_FRAMES
+        elif self.face_ttl > 0:
+            faces = self.last_faces
+            self.face_ttl -= 1
+            
         # We store status of [LeftEye, RightEye] for each player
         player_status = {i: [False, False] for i in range(self.active_players)}
         
@@ -58,20 +69,31 @@ class PlayerStateController:
             right_eye_covered = status[0][1]
             
             if left_eye_covered and not right_eye_covered:
+                self.steering_vals[0] -= config.PWM_STEP
                 action_text, action_color = "TURN_LEFT", config.COLOR_CYAN
             elif not left_eye_covered and right_eye_covered:
+                self.steering_vals[0] += config.PWM_STEP
                 action_text, action_color = "TURN_RIGHT", config.COLOR_CYAN
+            else:
+                self.steering_vals[0] *= config.PWM_DECAY
                 
         elif self.active_players == 3:
             # 3 Player Mode (Final Project): P1 = Left, P2 = Center, P3 = Right
-            # A player is considered covered if ANY eye is covered
             p1_covered = status[0][0] or status[0][1]
             p2_covered = status[1][0] or status[1][1]
             p3_covered = status[2][0] or status[2][1]
             
             if p1_covered and not p2_covered and not p3_covered:
+                self.steering_vals[0] -= config.PWM_STEP
                 action_text, action_color = "TURN_LEFT", config.COLOR_CYAN
             elif not p1_covered and not p2_covered and p3_covered:
+                self.steering_vals[0] += config.PWM_STEP
                 action_text, action_color = "TURN_RIGHT", config.COLOR_CYAN
+            else:
+                self.steering_vals[0] *= config.PWM_DECAY
 
-        return action_text, action_color
+        # Clamp values between -1.0 and 1.0
+        for i in range(3):
+            self.steering_vals[i] = max(-1.0, min(1.0, self.steering_vals[i]))
+
+        return action_text, action_color, self.steering_vals
