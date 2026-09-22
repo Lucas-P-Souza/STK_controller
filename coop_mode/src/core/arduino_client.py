@@ -15,6 +15,11 @@ UDP_PORT = 6006
 # Maximum distance (cm) for item activation
 DISTANCE_THRESHOLD = 5.0  
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import config
+
 def send_cmd(sock, cmd):
     sock.sendto(cmd.encode("utf-8"), (UDP_IP, UDP_PORT))
 
@@ -35,6 +40,7 @@ def main():
     state_nitro = False
     state_accelerate = False
     state_brake = False
+    last_motor_time = 0.0
 
     try:
         while True:
@@ -44,7 +50,6 @@ def main():
                     continue
                 
                 parts = line.split(',')
-                # Expecting: distance, nitro_flag, accel_flag
                 if len(parts) == 3:
                     try:
                         distance = float(parts[0])
@@ -74,39 +79,51 @@ def main():
                         else:
                             state_nitro = False
 
-                        # 3. Acceleration & Braking Logic (Analog Motor)
+                        # 3. Acceleration & Braking Logic (Time-Held)
                         if accel_flag == 1:
-                            # Forward
+                            last_motor_time = time.time()
                             if state_brake:
                                 send_cmd(sock, "R_BRAKE")
                                 state_brake = False
                             if not state_accelerate:
                                 send_cmd(sock, "P_ACCELERATE")
-                                print("[ACTION] ACCELERATING (Forward)")
+                                print(f"[ACTION] ACCELERATING (Holding for {config.MOTOR_HOLD_SECONDS}s)")
                                 state_accelerate = True
                         elif accel_flag == 2:
-                            # Backward / Brake
+                            last_motor_time = time.time()
                             if state_accelerate:
                                 send_cmd(sock, "R_ACCELERATE")
                                 state_accelerate = False
                             if not state_brake:
                                 send_cmd(sock, "P_BRAKE")
-                                print("[ACTION] BRAKING (Backward)")
+                                print(f"[ACTION] BRAKING (Holding for {config.MOTOR_HOLD_SECONDS}s)")
                                 state_brake = True
                         else:
-                            # Stopped
-                            if state_accelerate:
-                                send_cmd(sock, "R_ACCELERATE")
-                                print("[ACTION] MOTOR STOPPED (Released Gas)")
-                                state_accelerate = False
-                            if state_brake:
-                                send_cmd(sock, "R_BRAKE")
-                                print("[ACTION] MOTOR STOPPED (Released Brake)")
-                                state_brake = False
+                            # Stopped, but check if hold time has passed
+                            if time.time() - last_motor_time >= config.MOTOR_HOLD_SECONDS:
+                                if state_accelerate:
+                                    send_cmd(sock, "R_ACCELERATE")
+                                    print("[ACTION] MOTOR STOPPED (Hold time expired)")
+                                    state_accelerate = False
+                                if state_brake:
+                                    send_cmd(sock, "R_BRAKE")
+                                    print("[ACTION] MOTOR STOPPED (Hold time expired)")
+                                    state_brake = False
 
                     except ValueError:
                         pass # Ignore malformed data
             else:
+                # Still check timeout even if no data is received yet
+                if time.time() - last_motor_time >= config.MOTOR_HOLD_SECONDS:
+                    if state_accelerate:
+                        send_cmd(sock, "R_ACCELERATE")
+                        print("[ACTION] MOTOR STOPPED (Hold time expired)")
+                        state_accelerate = False
+                    if state_brake:
+                        send_cmd(sock, "R_BRAKE")
+                        print("[ACTION] MOTOR STOPPED (Hold time expired)")
+                        state_brake = False
+                        
                 time.sleep(0.01)
 
     except KeyboardInterrupt:
