@@ -34,6 +34,7 @@ def main():
     state_fire = False
     state_nitro = False
     state_accelerate = False
+    state_brake = False
 
     try:
         while True:
@@ -73,17 +74,35 @@ def main():
                         else:
                             state_nitro = False
 
-                        # 3. Acceleration Logic (Analog Motor)
+                        # 3. Acceleration & Braking Logic (Analog Motor)
                         if accel_flag == 1:
+                            # Forward
+                            if state_brake:
+                                send_cmd(sock, "R_BRAKE")
+                                state_brake = False
                             if not state_accelerate:
                                 send_cmd(sock, "P_ACCELERATE")
-                                print("[ACTION] ACCELERATING")
+                                print("[ACTION] ACCELERATING (Forward)")
                                 state_accelerate = True
-                        else:
+                        elif accel_flag == 2:
+                            # Backward / Brake
                             if state_accelerate:
                                 send_cmd(sock, "R_ACCELERATE")
-                                print("[ACTION] COASTING")
                                 state_accelerate = False
+                            if not state_brake:
+                                send_cmd(sock, "P_BRAKE")
+                                print("[ACTION] BRAKING (Backward)")
+                                state_brake = True
+                        else:
+                            # Stopped
+                            if state_accelerate:
+                                send_cmd(sock, "R_ACCELERATE")
+                                print("[ACTION] MOTOR STOPPED (Released Gas)")
+                                state_accelerate = False
+                            if state_brake:
+                                send_cmd(sock, "R_BRAKE")
+                                print("[ACTION] MOTOR STOPPED (Released Brake)")
+                                state_brake = False
 
                     except ValueError:
                         pass # Ignore malformed data
