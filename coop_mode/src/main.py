@@ -13,7 +13,23 @@ from src.core.network_client import STKNetworkClient
 import subprocess
 import atexit
 
+arduino_process = None
+
+def cleanup():
+    if arduino_process:
+        print("[INFO] Terminating Arduino client...")
+        arduino_process.terminate()
+
+atexit.register(cleanup)
+
 def main():
+    global arduino_process
+    
+    # Start Arduino client in background
+    arduino_script = os.path.join(os.path.dirname(__file__), 'core', 'arduino_client.py')
+    print("[INFO] Starting Arduino background process...")
+    arduino_process = subprocess.Popen([sys.executable, "-u", arduino_script])
+
     tracker = VisionTracker()
     logic = PlayerStateController()
     net_client = STKNetworkClient(config.UDP_IP, config.UDP_PORT)
