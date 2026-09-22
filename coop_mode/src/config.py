@@ -53,4 +53,4 @@ FONT_SCALE_LARGE = 1.2
 FONT_THICKNESS = 2
 
 
-FACE_DETECTOR_PATH = os.path.join(MODELS_DIR, 'face_detection_full_range.tflite')
+FACE_DETECTOR_PATH = os.path.join(MODELS_DIR, 'blaze_face_short_range.tflite')
