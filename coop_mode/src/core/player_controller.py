@@ -45,6 +45,11 @@ class PlayerStateController:
             if len(filtered_faces) == self.active_players:
                 sorted_faces = sorted(filtered_faces, key=lambda f: f[0] + f[2]/2)
                 for i, face_box in enumerate(sorted_faces):
+                    old_box = self.memory[i].get('box', ())
+                    if old_box and len(old_box) == 4:
+                        alpha = 0.5
+                        face_box = [int(alpha * n + (1 - alpha) * o) for n, o in zip(face_box, old_box)]
+                    
                     self.memory[i]['box'] = face_box
                     self.memory[i]['eyes'] = self._extract_eye_coords(face_box)
                     self.memory[i]['nose_x'] = (face_box[0] + face_box[2]/2) / width
@@ -61,6 +66,11 @@ class PlayerStateController:
                                 min_dist = dist
                                 best_match = i
                     if best_match != -1:
+                        old_box = self.memory[best_match].get('box', ())
+                        if old_box and len(old_box) == 4:
+                            alpha = 0.5
+                            face_box = [int(alpha * n + (1 - alpha) * o) for n, o in zip(face_box, old_box)]
+                            
                         self.memory[best_match]['box'] = face_box
                         self.memory[best_match]['eyes'] = self._extract_eye_coords(face_box)
                         self.memory[best_match]['nose_x'] = nose_x
