@@ -35,6 +35,9 @@ def main():
     net_client = STKNetworkClient(config.UDP_IP, config.UDP_PORT)
     
     cap = cv2.VideoCapture(0)
+    # MJPG hardware compression to prevent USB 2.0 bandwidth saturation at 30 FPS
+    cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"MJPG"))
+    
     # Tweak: Force OpenCV to NOT queue frames, always grabbing the absolute latest physical frame
     cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
     

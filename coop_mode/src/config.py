@@ -9,10 +9,10 @@ MODELS_DIR = os.path.join(ROOT_DIR, 'assets', 'models')
 UDP_IP = '127.0.0.1'
 UDP_PORT = 6006
 
-# Camera
-CAM_WIDTH = 1280
-CAM_HEIGHT = 720
-CAM_FPS = 30
+# Configurações de Câmera e Display
+CAM_WIDTH = 640
+CAM_HEIGHT = 360
+FPS_CAP = 30
 
 # AI Models
 FACE_MODEL_PATH = os.path.join(MODELS_DIR, 'face_landmarker.task')
