@@ -23,18 +23,38 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(address)
 
 def human_tap(key):
-    """Milagrosa função de tap que burla o Wayland e os 60FPS do jogo!"""
+    """Custom tap function to bypass Wayland limits and ensure STK registers the frame."""
     keyboard.press(key)
-    time.sleep(0.05) # Delay crucial para o jogo registrar o frame
+    time.sleep(0.05) # Crucial delay for the game to register the input
     keyboard.release(key)
 
 # Hardware level bindings com a lib 'keyboard'
 bindings = [
+    ['UP', 'up', human_tap],
+    ['DOWN', 'down', human_tap],
+    ['LEFT', 'left', human_tap],
+    ['RIGHT', 'right', human_tap],
+    ['SELECT', 'enter', human_tap],
+    ['CANCEL', 'backspace', human_tap],
+    ['BACK', 'backspace', human_tap],
+    ['FIRE', 'space', human_tap],
+    ['NITRO', 'n', human_tap],
+    ['P_NITRO', 'n', keyboard.press],
+    ['R_NITRO', 'n', keyboard.release],
+    ['P_SKIDDING', 'v', keyboard.press],
+    ['R_SKIDDING', 'v', keyboard.release],
+    ['P_LOOKBACK', 'b', keyboard.press],
+    ['R_LOOKBACK', 'b', keyboard.release],
+    ['RESCUE', 'backspace', human_tap],
+    ['PAUSE', 'escape', human_tap],
+    ['P_UP', 'up', keyboard.press],
+    ['R_UP', 'up', keyboard.release],
+    ['P_DOWN', 'down', keyboard.press],
+    ['R_DOWN', 'down', keyboard.release],
     ['P_LEFT', 'left', keyboard.press],
     ['R_LEFT', 'left', keyboard.release],
     ['P_RIGHT', 'right', keyboard.press],
     ['R_RIGHT', 'right', keyboard.release],
-    ['RESCUE', 'backspace', human_tap],
     ['P_ACCELERATE', 'up', keyboard.press],
     ['R_ACCELERATE', 'up', keyboard.release],
     ['P_BRAKE', 'down', keyboard.press],

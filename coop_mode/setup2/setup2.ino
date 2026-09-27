@@ -52,7 +52,11 @@ void setup() {
   pinMode(wheel, OUTPUT);
   pinMode(usPin, OUTPUT);
 
-  randomSeed(analogRead(A1)); // A0 étant utilisé pour "moteur", on prend A1 comme graine
+  // Enable internal pull-ups for motor pins to prevent floating values
+  pinMode(A0, INPUT_PULLUP);
+  pinMode(A2, INPUT_PULLUP);
+
+  randomSeed(analogRead(A1)); // A0 is used by the motor, use A1 as seed
   randomiserValeurs();
 }
 
@@ -65,9 +69,8 @@ void loop() {
   int etat1 = digitalRead(bt1);
   int etat2 = digitalRead(bt2);
   int etat3 = digitalRead(bt3);
-  int moteur_value = analogRead(moteur);
 
-  // Bouton 1
+  // Button 1
   if (etat1 == LOW && !state1 && value1 > 0) {
     value1 -= 1;
     state1 = true;
@@ -75,7 +78,7 @@ void loop() {
     state1 = false;
   }
 
-  // Bouton 2
+  // Button 2
   if (etat2 == LOW && !state2 && value2 > 0) {
     value2 -= 1;
     state2 = true;
@@ -83,7 +86,7 @@ void loop() {
     state2 = false;
   }
 
-  // Bouton 3
+  // Button 3
   if (etat3 == LOW && !state3 && value3 > 0) {
     value3 -= 1;
     state3 = true;
@@ -91,7 +94,7 @@ void loop() {
     state3 = false;
   }
 
-  // Réinitialisation quand les 3 valeurs sont à 0
+  // Reset when all 3 values reach 0
   if (value1 == 0 && value2 == 0 && value3 == 0) {
     randomiserValeurs();
     tone(buzzerPin, 100, 500);
@@ -125,16 +128,22 @@ void loop() {
   digitalWrite(led2, value2 == 0);
   digitalWrite(led3, value3 == 0);
 
-  if (moteur_value > 0) {
-    Serial.println(1);
+  int motor_A0 = analogRead(A0);
+  int motor_A2 = analogRead(A2);
+  int threshold = 30; // Noise filter
+
+  if (motor_A0 > motor_A2 + threshold) {
+    Serial.println(1); // Spinning Forward -> Accelerate
+    digitalWrite(wheel, 1);
+  } else if (motor_A2 > motor_A0 + threshold) {
+    Serial.println(2); // Spinning Backward -> Brake
     digitalWrite(wheel, 1);
   } else {
-    Serial.println(0);
+    Serial.println(0); // Stopped
     digitalWrite(wheel, 0);
   }
 
-  // Pour le moment on ne peut pas utiliser le digit,
-  // donc on utilise des LEDs pour que quand une valeur est à 0, sa LED s'allume
+  // Fallback: Using LEDs to indicate when a button's value reaches 0
 
   delay(20);
 }

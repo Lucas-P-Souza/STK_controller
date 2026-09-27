@@ -162,9 +162,7 @@ class PlayerStateController:
                     action_text, action_color = "TURN_RIGHT", config.COLOR_CYAN
                     
             if not is_turning:
-                self.steering_val *= config.PWM_DECAY
-                if abs(self.steering_val) < config.PWM_DEADZONE:
-                    self.steering_val = 0.0
+                self.steering_val = 0.0
 
             # --- PWM Key Output Logic ---
             self.pwm_counter = (self.pwm_counter + 1) % config.PWM_WINDOW_FRAMES
