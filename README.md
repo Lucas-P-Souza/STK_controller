@@ -1,6 +1,6 @@
 # SuperTuxKart Dual Controller System 🏎️💨
 
-> **Academic Project:** M2 SIIA – UE MCSI (2025-2026)  
+> **Academic Project:** M2 SIIA – UE MCSI (2026-2027)  
 
 ## 1. Project Summary
 This is our final project for the M2 SIIA MCSI course. The goal was to build two new ways to control SuperTuxKart without using a standard keyboard or mouse to drive. 
