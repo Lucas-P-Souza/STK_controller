@@ -6,7 +6,9 @@ from mediapipe.tasks.python import vision
 from src import config
 
 class VisionTracker:
+    """Handles face and hand tracking using MediaPipe."""
     def __init__(self):
+        """Initializes face and hand tracking models."""
         # Face Detector
         face_base = python.BaseOptions(model_asset_path=config.FACE_DETECTOR_PATH)
         face_opts = vision.FaceDetectorOptions(base_options=face_base, min_detection_confidence=0.6)
@@ -22,7 +24,7 @@ class VisionTracker:
         self.hand_tracker = vision.HandLandmarker.create_from_options(hand_opts)
 
     def process_frame(self, rgb_frame, gray_frame):
-        
+        """Processes an image frame to detect faces and hands."""
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
         
         # Hand tracking

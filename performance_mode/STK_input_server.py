@@ -22,7 +22,7 @@ address     = ('localhost', 6006)
 sock        = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(address)
 
-#list of tuples: (received command, keyboard key, keyboard func )
+# list of tuples: (received command, keyboard key, keyboard func )
 bindings    = [ ['UP', 'up', keyboard.press_and_release],
                 ['DOWN', 'down', keyboard.press_and_release],
                 ['LEFT', 'left', keyboard.press_and_release],

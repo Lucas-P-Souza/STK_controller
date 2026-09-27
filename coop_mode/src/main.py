@@ -16,6 +16,7 @@ import atexit
 arduino_process = None
 
 def cleanup():
+    """Terminate the background Arduino client process."""
     if arduino_process:
         print("[INFO] Terminating Arduino client...")
         arduino_process.terminate()
@@ -23,6 +24,7 @@ def cleanup():
 atexit.register(cleanup)
 
 def main():
+    """Run the main application loop."""
     global arduino_process
     
     # Start Arduino client in background

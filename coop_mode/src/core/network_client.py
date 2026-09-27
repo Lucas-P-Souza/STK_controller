@@ -2,7 +2,9 @@ import socket
 from src import config
 
 class STKNetworkClient:
+    """Manages UDP network communication with the STK server."""
     def __init__(self, ip=config.UDP_IP, port=config.UDP_PORT):
+        """Initializes the network client with target IP and port."""
         self.ip = ip
         self.port = port
         self.client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

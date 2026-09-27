@@ -26,8 +26,14 @@ frame_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 frame_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
 class TrackingResults:
+  """
+  Holds the results from the face tracking model.
+  """
   tracking_results = None
   def get_result(self, result: vision.FaceDetectorResult, output_image: mp.Image, timestamp_ms: int):
+      """
+      Callback to retrieve the tracking result from the face detector.
+      """
       self.tracking_results = result
     
 res = TrackingResults()
@@ -49,10 +55,15 @@ TEXT_COLOR = (255, 0, 0)  # red
 def _normalized_to_pixel_coordinates(
     normalized_x: float, normalized_y: float, image_width: int,
     image_height: int) -> Union[None, Tuple[int, int]]:
-  """Converts normalized value pair to pixel coordinates."""
+  """
+  Converts normalized value pair to pixel coordinates.
+  """
 
   # Checks if the float value is between 0 and 1.
   def is_valid_normalized_value(value: float) -> bool:
+    """
+    Checks if a normalized value is valid.
+    """
     return (value > 0 or math.isclose(0, value)) and (value < 1 or
                                                       math.isclose(1, value))
 
@@ -68,7 +79,9 @@ def visualize(
     image,
     detection_result
 ) -> np.ndarray:
-  
+  """
+  Draws bounding boxes and keypoints on the input image.
+  """
   annotated_image = image.copy()
   height, width, _ = image.shape
 
@@ -106,7 +119,9 @@ def visualize(
 
 
 def compute3DPos(ibe_x,ibe_y, rec_ipd):
-  
+  """
+  Computes the 3D position of the head based on image coordinates and IPD.
+  """
   z = int((fl*user_ipd)/rec_ipd)
   x = (ibe_x - (frame_width/2) )*z/fl
   y = (ibe_y - (frame_height/2)) *z/fl
@@ -117,9 +132,12 @@ def compute3DPos(ibe_x,ibe_y, rec_ipd):
 
 
 
-################################ main fonction ##############################
+################################ main function ##############################
   
 def runtracking():
+  """
+  Main loop to capture frames and perform face tracking continuously.
+  """
 
   print("\nTracking started !!!")
   print("Hit ESC key to quit...")
@@ -167,7 +185,7 @@ def runtracking():
           ################### Part 5: send the head position with OSC ######################
           clientOSC.send_message(b'/tracker/head/pos_xyz', [x, y, z])
   
-      # Display an image in a window (you can avoid to display the image to improve the performance)
+      # Display an image in a window (you can avoid displaying the image to improve the performance)
       annotated_image = mp_image.numpy_view()
       annotated_image = visualize(annotated_image, res.tracking_results)
       bgr_annotated_image = cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
