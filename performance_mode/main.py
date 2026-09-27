@@ -1,4 +1,4 @@
-#------ IMPORT ------
+#------ IMPORTS ------
 
 from oscpy.server import OSCThreadServer
 from time import sleep
@@ -13,26 +13,28 @@ SERIAL_PORT = "COM4"
 BAUD_RATE = 9600
 ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
 
-# file thread-safe pour transmettre les lignes lues par le thread série
+# Thread-safe queue to transmit lines read by the serial thread
 serial_queue = queue.Queue(maxsize=1)
 stop_serial_thread = threading.Event()
 
 
 def serial_reader():
-    """Tourne dans un thread séparé : lit le port série en continu.
-    Si l'Arduino se fige (ex: bus I2C bloqué), ce thread reste bloqué
-    dans son coin sans jamais ralentir la boucle de contrôle principale."""
+    """
+    Runs in a separate thread: reads the serial port continuously.
+    If Arduino freezes (e.g., blocked I2C bus), this thread stays blocked
+    without slowing down the main control loop.
+    """
     while not stop_serial_thread.is_set():
         try:
             line = ser.readline().decode('utf-8', errors='ignore').strip()
         except serial.SerialException as e:
-            print(f"[serial_reader] erreur port série: {e}")
+            print(f"[serial_reader] serial port error: {e}")
             time.sleep(0.5)
             continue
 
         if line:
-            # on ne garde que la ligne la plus récente : si le thread principal
-            # n'a pas eu le temps de consommer la précédente, on l'écrase
+            # Keep only the most recent line: if the main thread
+            # did not consume the previous one, overwrite it
             if serial_queue.full():
                 try:
                     serial_queue.get_nowait()
@@ -41,11 +43,11 @@ def serial_reader():
             serial_queue.put(line)
 
 
-#------ COMMUNICATION AVEC PROG SERV------
+#------ COMMUNICATION WITH SERVER PROGRAM ------
 address = ('localhost', 6006)
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-#------ GLOBAL PARAMETERS------
+#------ GLOBAL PARAMETERS ------
 ANGLE_MIN = 10.0
 ANGLE_MAX = 45.0
 LOOP_HZ = 90
@@ -58,8 +60,11 @@ rescue_state = 0
 MIN_STATE_DURATION = 0.05
 MAX_STATE_DURATION = 0.3
 
-#------ GLOBAL FUNCTIONS------
+#------ GLOBAL FUNCTIONS ------
 def normalize(raw_value, min_value, max_value):
+    """
+    Normalizes a raw value between min and max into a 0.0 to 1.0 range.
+    """
     a = abs(raw_value)
     if a < min_value:
         return 0.0
@@ -68,6 +73,9 @@ def normalize(raw_value, min_value, max_value):
 
 
 def dump(address, *values):
+    """
+    Prints OSC messages received by the server.
+    """
     print(u'{}: {}'.format(
         address.decode('utf8'),
         ', '.join(
@@ -77,11 +85,17 @@ def dump(address, *values):
     ))
 
 
-#------ CLASS PULSE SEND MSG-----
+#------ CLASS PULSE SEND MSG ------
 
 class PulsedCommand:
+    """
+    Manages pulsed OSC commands to simulate button presses and releases.
+    """
 
     def __init__(self, pressed_cmd, released_cmd):
+        """
+        Initializes a pulsed command with press and release OSC messages.
+        """
         self.pressed_cmd = pressed_cmd
         self.released_cmd = released_cmd
         self.value = 0.0
@@ -89,9 +103,15 @@ class PulsedCommand:
         self.next_switch = 0.0
 
     def set_value(self, v):
+        """
+        Sets the command value clamped between 0.0 and 1.0.
+        """
         self.value = max(0.0, min(1.0, v))
 
     def update(self, now):
+        """
+        Updates the pulsed command state based on elapsed time.
+        """
         if now < self.next_switch:
             return
 
@@ -121,30 +141,45 @@ class PulsedCommand:
             self.next_switch = now + t2
 
 
-#------ GLOBAL PARAMETERS 2 -----
+#------ GLOBAL PARAMETERS 2 ------
 right_cmd = PulsedCommand(b'P_RIGHT', b'R_RIGHT')
 left_cmd = PulsedCommand(b'P_LEFT', b'R_LEFT')
 
 
-#------ drift-----
+#------ DRIFT ------
 def callback_press_pad_x(*values):
+    """
+    Sends skidding command when pad X is pressed.
+    """
     if values:
         client_socket.sendto(b'P_SKIDDING', address)
 
 def callback_press_pad_y(*values):
+    """
+    Placeholder callback for pad Y press.
+    """
     pass
 
 def callback_unpress_pad(*values):
+    """
+    Releases skidding command when pad is unpressed.
+    """
     if values:
         client_socket.sendto(b'R_SKIDDING', address)
 
 
 
-#------ CALLBACK GYROSCOPE FOR LEFT/RIGHT------
+#------ CALLBACK GYROSCOPE FOR LEFT/RIGHT ------
 def callback_roll(*values):
+    """
+    Placeholder callback for gyroscope roll.
+    """
     pass
 
 def callback_pitch(*values):
+    """
+    Maps gyroscope pitch to left/right turning commands.
+    """
     v = values[0]
     m = normalize(v, ANGLE_MIN, ANGLE_MAX)
     if v >= ANGLE_MIN:
@@ -159,11 +194,17 @@ def callback_pitch(*values):
 
 
 def callback_yaw(*values):
+    """
+    Placeholder callback for gyroscope yaw.
+    """
     pass
 
 
-#------ CALLBACK HEAD POSITION FOR ACC/BRAKE AND RESCUE------
+#------ CALLBACK HEAD POSITION FOR ACC/BRAKE AND RESCUE ------
 def callback_head_pos(x, y, z):
+    """
+    Maps head position coordinates to acceleration, braking, and rescue commands.
+    """
     global state, rescue_state
     if x > -5:
         state = 1
@@ -190,8 +231,11 @@ def callback_head_pos(x, y, z):
 
 
 
-#------ FIRE WITH ARDUINO------
+#------ FIRE WITH ARDUINO ------
 def fire_ultrasound(dist):
+    """
+    Fires weapon when ultrasonic sensor detects an object within 5cm.
+    """
     global state_dist
     if dist:
         try:
@@ -206,8 +250,11 @@ def fire_ultrasound(dist):
             pass
 
 
-#------ NITRO WITH ARDUINO------
+#------ NITRO WITH ARDUINO ------
 def nitro_lux(lux):
+    """
+    Triggers nitro when light sensor reading falls below a threshold.
+    """
     global state_lux
     if lux:
         try:
@@ -225,6 +272,9 @@ def nitro_lux(lux):
 
 #------ MAIN ------
 def main():
+    """
+    Main entry point: initializes server, binds callbacks, and runs the control loop.
+    """
     osc = OSCThreadServer(default_handler=dump)
     osc.listen(address='0.0.0.0', port=8000, default=True)
     print("---------------------")
@@ -237,7 +287,7 @@ def main():
     osc.bind(b'/multisense/pad/touchUP', callback_unpress_pad)    # DRIFT
     osc.bind(b'/tracker/head/pos_xyz', callback_head_pos)       # ACC/BRAKE AND RESCUE
 
-    # thread dédié à la lecture série, pour ne jamais bloquer la boucle 90Hz
+    # Dedicated thread for serial reading to prevent blocking the 90Hz loop
     reader_thread = threading.Thread(target=serial_reader, daemon=True)
     reader_thread.start()
 
@@ -247,7 +297,7 @@ def main():
             right_cmd.update(now)
             left_cmd.update(now)
 
-            # ARDUINO : on prend la dernière ligne dispo sans jamais bloquer ici
+            # ARDUINO: take the latest available line without blocking
             try:
                 line = serial_queue.get_nowait()
                 parts = line.split(",")
@@ -262,8 +312,8 @@ def main():
     except KeyboardInterrupt:
         pass
     except Exception as e:
-        # pour ne plus jamais avoir un arrêt silencieux non expliqué
-        print(f"[main] erreur inattendue: {e}")
+        # Prevent unexplained silent crash
+        print(f"[main] unexpected error: {e}")
     finally:
         stop_serial_thread.set()
         osc.stop()

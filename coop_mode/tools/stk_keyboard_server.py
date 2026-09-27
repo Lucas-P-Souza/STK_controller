@@ -5,9 +5,9 @@ import time
 import socket
 import keyboard
 
-# Exigir sudo no Linux para injeção de hardware
+# Require sudo on Linux for hardware injection
 if os.geteuid() != 0:
-    print("\033[91mErro: Este script manipula eventos de hardware e precisa ser executado como root (sudo).\x1b[0m")
+    print("\033[91mError: This script handles hardware events and must be run as root (sudo).\x1b[0m")
     sys.exit(1)
 
 GREEN = '\033[92m'
@@ -23,12 +23,12 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(address)
 
 def human_tap(key):
-    """Custom tap function to bypass Wayland limits and ensure STK registers the frame."""
+    """Press and release a key with a small delay."""
     keyboard.press(key)
     time.sleep(0.05) # Crucial delay for the game to register the input
     keyboard.release(key)
 
-# Hardware level bindings com a lib 'keyboard'
+# Hardware level bindings with the 'keyboard' library
 bindings = [
     ['UP', 'up', human_tap],
     ['DOWN', 'down', human_tap],

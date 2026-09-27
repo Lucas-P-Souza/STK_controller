@@ -2,7 +2,9 @@
 from src import config
 
 class PlayerStateController:
+    """Manages the state and collisions for multiple players."""
     def __init__(self):
+        """Initializes the controller with default player memory."""
         self.active_players = config.MAX_PLAYERS
         self.memory = {i: {'eyes': [], 'box': (), 'nose_x': -1.0, 'ttl': 0} for i in range(config.MAX_PLAYERS)}
         self.rescue_fired = False
@@ -10,6 +12,7 @@ class PlayerStateController:
         self.pwm_counter = 0
 
     def set_player_mode(self, num_players):
+        """Sets the active number of players and resets memory."""
         if num_players not in [2, 3]: return 
         self.active_players = num_players
         self.memory = {i: {'eyes': [], 'box': (), 'nose_x': -1.0, 'ttl': 0} for i in range(config.MAX_PLAYERS)}
@@ -18,6 +21,7 @@ class PlayerStateController:
         self.pwm_counter = 0
 
     def _extract_eye_coords(self, face_box):
+        """Extracts approximate eye coordinates from a face bounding box."""
         x, y, w, h = face_box
         eye_y = int(y + h * config.EYE_HEIGHT_RATIO)
         left_eye_x = int(x + w * 0.30)
@@ -25,6 +29,7 @@ class PlayerStateController:
         return [(left_eye_x, eye_y), (right_eye_x, eye_y)]
 
     def update(self, faces, hand_boxes, width, height):
+        """Updates player tracking and evaluates hand interactions."""
         if len(faces) > 0:
             # NMS Filter
             filtered_faces = []
@@ -125,6 +130,7 @@ class PlayerStateController:
         return self._evaluate_action(player_status)
 
     def _evaluate_action(self, status):
+        """Evaluates collision status to determine the steering action."""
         left_covered = status[0]
         rescue_condition = False
         
