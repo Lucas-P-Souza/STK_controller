@@ -5,8 +5,6 @@
 ## 1. Project Summary
 This is our final project for the M2 SIIA MCSI course. The goal was to build two new ways to control SuperTuxKart without using a standard keyboard or mouse to drive.
 
-Both modes reuse what we built during the TPs (UDP server/client, OSC with the phone, continuous commands, head tracking with MediaPipe) and add new parts for the project, mainly the Arduino sensors and the multiplayer coop mode. Section 3 details what comes from each TP.
-
 ---
 
 ## 2. The Two Game Modes
@@ -59,7 +57,7 @@ flowchart TD
 ```
 
 ### B. Collaboration Mode (`coop_mode/`)
-A co-op mode for 2 or 3 players in front of the webcam. Players have to coordinate because the driving tasks are split between them.
+A co-op mode for 3 players in front of the webcam. Players have to coordinate because the driving tasks are split between them.
 
 - **Steering (Camera):** players stand on the left and right sides of the webcam. The left player covers their eyes to steer left, and the right player covers their eyes to steer right.
 - **Rescue:** all active players must cover their eyes at the same time to call the rescue bird.
@@ -105,32 +103,6 @@ flowchart TD
 
 ---
 
-## 3. From the TPs to the Project
-
-| TP | What we reused | Where in the project |
-|---|---|---|
-| TP0 | UDP server / client (`STK_input_server.py`, `STK_input_client.py`) | `performance_mode/STK_input_server.py` (server of the TP), `coop_mode/tools/stk_keyboard_server.py` (adapted), UDP clients in both modes |
-| TP0 | OSC with MultiSense (`testOSC.py`, `bind()`) | OSC server in `performance_mode/main.py` |
-| TP1 §2b | Steering with the phone orientation | `callback_pitch` in `performance_mode/main.py` |
-| TP1 §4 | Continuous commands (pressed / released, times t1 and t2) | `PulsedCommand` in `performance_mode/main.py`, frame-based version in `coop_mode/src/core/player_controller.py` |
-| TP2 | MediaPipe face detection, calibration, 3D head position, OSC sending | `performance_mode/face_tracking.py`, `coop_mode/src/vision/tracker.py` |
-| TP2 | Hand tracking | `HandLandmarker` in `coop_mode/src/vision/tracker.py` |
-| New | Arduino sensors, coop mode with 2-3 players, covering the eyes to steer | `*.ino`, `arduino_client.py`, `player_controller.py` |
-
-The comments in the code also indicate which TP each part comes from.
-
----
-
-## 4. Technical Details
-
-- **Keyboard server:** on Linux, Wayland blocks background key inputs, so the coop mode sends its commands to `stk_keyboard_server.py`, which must be run with `sudo`. The performance mode uses the TP0 server.
-- **Continuous commands:** steering keys are pressed and released quickly, and the time spent pressed depends on how much the player wants to turn (TP1 §4).
-- **Vision:** face and hand detection use MediaPipe, as in TP2 (`blaze_face_short_range.tflite`). In the coop mode, each face box is averaged with the previous one to reduce jitter.
-- **Camera (coop):** OpenCV uses MJPG at 640x360 to reach 30 FPS.
-- **Arduino:** read in a separate thread (performance) or a separate process (coop), so the main loop never waits for the serial port.
-
----
-
 ## 5. Installation
 
 We recommend using a Python virtual environment.
@@ -147,40 +119,34 @@ pip install -r requirements.txt
 
 ---
 
-## 6. How to Run
+## 6. How to Run (Coop Mode)
 
-### Coop Mode
+You need to run the keyboard server and the main vision loop at the same time in two different terminals.
 
-Upload `coop_mode/setup2/setup2.ino` to the Arduino.
+### Step 1: Start the Emulation Server (Root required)
 
-**Terminal 1**, keyboard server (root required):
+In **Terminal 1**:
+
 ```bash
+# Make sure you use the python from your virtual environment
 sudo /path/to/your/venv/bin/python coop_mode/tools/stk_keyboard_server.py
 ```
-Add `-d` to run in debug mode: the received commands are printed instead of pressing the keys.
 
-**Terminal 2**, camera and game logic:
+*(Tip: Add `-d` at the end to run in debug mode. It prints the received commands in the terminal instead of actually pressing physical keys).*
+
+### Step 2: Start the Game Client
+
+In **Terminal 2** (make sure your `venv` is activated):
+
 ```bash
 source venv/bin/activate
 python3 coop_mode/src/main.py
 ```
-This also starts the Arduino client in the background. Press `q` in the video window to quit.
 
-### Performance Mode
+*Note: This will automatically start the webcam interface AND connect to the Arduino in the background. Press `q` in the video window to quit.*
 
-Upload `performance_mode/lux/lux.ino` to the Arduino (it sends `distance,lux` lines), and set `SERIAL_PORT` at the top of `performance_mode/main.py` (for example `COM4` on Windows, `/dev/ttyACM0` on Linux).
+---
 
-1. Start the TP0 server:
-   ```bash
-   python performance_mode/STK_input_server.py
-   ```
-2. Start the main program:
-   ```bash
-   python performance_mode/main.py
-   ```
-3. On the phone, open MultiSense OSC, enter the IP of the computer and port `8000`, and enable **Orientation** and **PAD** (same setup as TP0).
-4. Set `address` in `performance_mode/face_tracking.py` to the IP of the computer running `main.py`, then start the head tracking from the `performance_mode/` folder (the model file is loaded from there). The optional argument is your interpupillary distance in cm:
-   ```bash
-   cd performance_mode
-   python face_tracking.py 6.2
-   ```
+## 7. Documentation
+
+We made sure to document all the core Python modules and classes (like `PulsedCommand`, `VisionTracker`, etc.) using standard docstrings. Because of this, the technical documentation can be easily extracted using tools like Sphinx or pydoc.
