@@ -1,7 +1,7 @@
 const int bt1 = 8;
 const int bt2 = 7;
-const int bt3 = 4;
-const int buzzerPin = 5;
+const int bt3 = 5;
+const int buzzerPin = 6;
 
 const int led1 = 9;
 const int led2 = 10;
@@ -10,7 +10,8 @@ const int led3 = 11;
 const int moteur = A0;
 const int wheel = 12;
 
-const int usPin = 2;
+const int usPin = 4;
+const int touchPin = 2;
 
 
 int value1 = 0;
@@ -51,6 +52,7 @@ void setup() {
   pinMode(led3, OUTPUT);
   pinMode(wheel, OUTPUT);
   pinMode(usPin, OUTPUT);
+  pinMode(touchPin, INPUT);
 
   // Enable internal pull-ups for motor pins to prevent floating values
   pinMode(A0, INPUT_PULLUP);
@@ -133,15 +135,19 @@ void loop() {
   int threshold = 30; // Noise filter
 
   if (motor_A0 > motor_A2 + threshold) {
-    Serial.println(1); // Spinning Forward -> Accelerate
+    Serial.print(1); // Spinning Forward -> Accelerate
     digitalWrite(wheel, 1);
   } else if (motor_A2 > motor_A0 + threshold) {
-    Serial.println(2); // Spinning Backward -> Brake
+    Serial.print(2); // Spinning Backward -> Brake
     digitalWrite(wheel, 1);
   } else {
-    Serial.println(0); // Stopped
+    Serial.print(0); // Stopped
     digitalWrite(wheel, 0);
   }
+  
+  Serial.print(",");
+  int touchState = digitalRead(touchPin);
+  Serial.println(touchState);
 
   // Fallback: Using LEDs to indicate when a button's value reaches 0
 
