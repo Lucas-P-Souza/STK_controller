@@ -3,30 +3,20 @@ import socket
 import time
 import threading
 
-# --- CONFIGURATION ---
-# Target serial port (adjust as needed, e.g., /dev/ttyUSB0)
-SERIAL_PORT = "/dev/ttyACM0" 
-BAUD_RATE = 9600
-
-# STK Server settings
-UDP_IP = "127.0.0.1"
-UDP_PORT = 6006
-
-# Maximum distance (cm) for item activation
-DISTANCE_THRESHOLD = 5.0  
-
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import config
 
 def send_cmd(sock, cmd):
-    sock.sendto(cmd.encode("utf-8"), (UDP_IP, UDP_PORT))
+    """Sends a UDP command to the server."""
+    sock.sendto(cmd.encode("utf-8"), (config.UDP_IP, config.UDP_PORT))
 
 def main():
-    print(f"[INFO] Connecting to Arduino on port {SERIAL_PORT}...")
+    """Main loop for reading Arduino serial data and forwarding actions."""
+    print(f"[INFO] Connecting to Arduino on port {config.SERIAL_PORT}...")
     try:
-        ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+        ser = serial.Serial(config.SERIAL_PORT, config.BAUD_RATE, timeout=1)
         time.sleep(2) # Wait for Arduino to reset
     except Exception as e:
         print(f"[ERROR] Failed to open serial port: {e}")
@@ -40,6 +30,7 @@ def main():
     state_nitro = False
     state_accelerate = False
     state_brake = False
+    state_drift = False
     last_motor_time = 0.0
 
     try:
@@ -50,14 +41,15 @@ def main():
                     continue
                 
                 parts = line.split(',')
-                if len(parts) == 3:
+                if len(parts) == 4:
                     try:
                         distance = float(parts[0])
                         nitro_flag = int(parts[1])
                         accel_flag = int(parts[2])
+                        drift_flag = int(parts[3])
 
                         # 1. Fire Logic (Ultrasonic)
-                        if distance > 0 and distance <= DISTANCE_THRESHOLD:
+                        if distance > 0 and distance <= config.DISTANCE_THRESHOLD:
                             if not state_fire:
                                 send_cmd(sock, "FIRE")
                                 print(f"[ACTION] FIRE! (Dist: {distance}cm)")
@@ -69,10 +61,13 @@ def main():
                         if nitro_flag == 1:
                             if not state_nitro:
                                 def hold_nitro():
+                                    """Holds nitro and acceleration for a set duration."""
                                     send_cmd(sock, "P_NITRO")
+                                    send_cmd(sock, "P_ACCELERATE")
                                     print("[ACTION] NITRO ENGAGED")
                                     time.sleep(2.0)
                                     send_cmd(sock, "R_NITRO")
+                                    send_cmd(sock, "R_ACCELERATE")
                                     print("[ACTION] NITRO RELEASED")
                                 threading.Thread(target=hold_nitro, daemon=True).start()
                                 state_nitro = True
@@ -109,6 +104,18 @@ def main():
                                     send_cmd(sock, "R_BRAKE")
                                     print("[ACTION] MOTOR STOPPED (Hold time expired)")
                                     state_brake = False
+
+                        # 4. Drift Logic (Touch Sensor)
+                        if drift_flag == 1:
+                            if not state_drift:
+                                send_cmd(sock, "P_SKIDDING")
+                                print("[ACTION] DRIFTING (Touch)")
+                                state_drift = True
+                        else:
+                            if state_drift:
+                                send_cmd(sock, "R_SKIDDING")
+                                print("[ACTION] DRIFT RELEASED")
+                                state_drift = False
 
                     except ValueError:
                         pass # Ignore malformed data

@@ -1,3 +1,7 @@
+"""
+Global configuration constants and settings for the SuperTuxKart Co-op Controller.
+This module centralized paths, thresholds, hardware endpoints, and UI colors.
+"""
 import os
 
 # Path Resolution
@@ -9,7 +13,12 @@ MODELS_DIR = os.path.join(ROOT_DIR, 'assets', 'models')
 UDP_IP = '127.0.0.1'
 UDP_PORT = 6006
 
-# Configurações de Câmera e Display
+# Hardware / Arduino
+SERIAL_PORT = '/dev/ttyACM0'
+BAUD_RATE = 9600
+DISTANCE_THRESHOLD = 5.0
+
+# Camera and Display Settings
 CAM_WIDTH = 640
 CAM_HEIGHT = 360
 FPS_CAP = 30
@@ -26,13 +35,13 @@ MAX_PLAYERS = 3
 MEMORY_TTL_FRAMES = 30
 
 # PWM Steering
-PWM_STEP = 0.25      
-PWM_DECAY = 0.8
+PWM_STEP = 0.5      
+PWM_DECAY = 0.8 
 PWM_DEADZONE = 0.05
 PWM_WINDOW_FRAMES = 5 
 
 # Hardware Timers
-MOTOR_HOLD_SECONDS = 3.0
+MOTOR_HOLD_SECONDS = 0.5
 
 # Spatial Thresholds
 FACE_MATCH_MAX_DIST = 0.2
