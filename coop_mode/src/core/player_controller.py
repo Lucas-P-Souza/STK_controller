@@ -1,3 +1,4 @@
+# Players logic: which face is which player, are the eyes covered, which keys to send
 """Core game logic: Boxes, NMS filter, and Point-in-Box collision."""
 from src import config
 
@@ -21,6 +22,8 @@ class PlayerStateController:
         self.pwm_counter = 0
 
     def _extract_eye_coords(self, face_box):
+        # in TP2 (Part 2) the eyes came from the BlazeFace keypoints,
+        # here they are placed in the face box: 30% and 70% of the width, 35% of the height
         """Extracts approximate eye coordinates from a face bounding box."""
         x, y, w, h = face_box
         eye_y = int(y + h * config.EYE_HEIGHT_RATIO)
@@ -44,7 +47,7 @@ class PlayerStateController:
                 if not is_inside:
                     filtered_faces.append(face_box)
             
-            # Prioritize closest faces
+            #keep the biggest faces (closest people), like "get the biggest face" in TP2
             filtered_faces = sorted(filtered_faces, key=lambda f: f[2]*f[3], reverse=True)[:self.active_players]
 
             if len(filtered_faces) == self.active_players:
@@ -60,6 +63,7 @@ class PlayerStateController:
                     self.memory[i]['nose_x'] = (face_box[0] + face_box[2]/2) / width
                     self.memory[i]['ttl'] = config.MEMORY_TTL_FRAMES
             else:
+                # some faces are missing (hidden by the hands): each face goes to the closest known player
                 for face_box in filtered_faces:
                     nose_x = (face_box[0] + face_box[2]/2) / width
                     best_match = -1
@@ -130,6 +134,8 @@ class PlayerStateController:
         return self._evaluate_action(player_status)
 
     def _evaluate_action(self, status):
+        # left player covers his eyes -> left, right player -> right, everybody -> rescue
+
         """Evaluates collision status to determine the steering action."""
         left_covered = status[0]
         rescue_condition = False
@@ -155,7 +161,7 @@ class PlayerStateController:
             # Block steering during rescue
             self.steering_val *= 0.8
         
-        # Continuous Steering (Float calculation)
+        # Continuous Steering (Float calculation), steering value between -1 (left) and 1 (right)
         is_turning = False
         if not rescue_condition:
             if self.active_players == 3:
@@ -179,6 +185,9 @@ class PlayerStateController:
                     
             if not is_turning:
                 self.steering_val = 0.0
+
+            # pressed / released pulses, same idea as TP1 part 4 but counted in frames:
+            # in a window of PWM_WINDOW_FRAMES frames, the key is pressed and released the rest of the time
 
             # --- PWM Key Output Logic ---
             self.pwm_counter = (self.pwm_counter + 1) % config.PWM_WINDOW_FRAMES

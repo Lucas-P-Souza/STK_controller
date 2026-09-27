@@ -1,3 +1,9 @@
+######################################################################################
+# from TP2 (base: face_tracking.py).                                                 #
+# MediaPipe FaceDetector (BlazeFace, LIVE_STREAM mode) as in the TP.                 #
+# The 3D head position (TP2 Part 4) is sent with OSC (TP2 Part 5) to main.py,        #
+# which uses it to accelerate / brake / rescue.                                      #
+######################################################################################
 
 import sys
 import time
@@ -11,19 +17,33 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-
+# focal length of our webcam, measured with calibrate.py
 fl = 407
+
+################## TP2 Part 4: 3D position ##################
+# height of the screen in cm
 screen_heigth = 25
+# our interpupillary distance in cm (can be given as argument, like in the TP)
 user_ipd = 6.2
+
 if len(sys.argv) >= 2:
   user_ipd = float(sys.argv[1])
+
+# TP2 Part 5: OSC address and port of the computer running main.py
+# (in the TP it was 127.0.0.1:7000)
 address = "10.250.39.171"
 port = 8000
 clientOSC = OSCClient(address, port)
+
+# capture frames from a camera and the time 
 cap = cv2.VideoCapture(0)
 first_time = time.time()*1000.0
+
+# get image size
 frame_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 frame_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
+################# TP2 Part 1: MediaPipe face detector (code given in the TP) #################
 
 class TrackingResults:
   """
@@ -92,6 +112,7 @@ def visualize(
     start_point = bbox.origin_x, bbox.origin_y
     end_point = bbox.origin_x + bbox.width, bbox.origin_y + bbox.height
 
+    # BlazeFace keypoints: 0 and 1 = eyes (green), 2 = nose tip (blue)
     i=0
     for keypoint in detection.keypoints:
       i+=1
@@ -117,7 +138,7 @@ def visualize(
 
   return annotated_image
 
-
+######################### TP2 Part 4: compute the 3D position ###########################
 def compute3DPos(ibe_x,ibe_y, rec_ipd):
   """
   Computes the 3D position of the head based on image coordinates and IPD.

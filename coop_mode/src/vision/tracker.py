@@ -1,3 +1,8 @@
+# Face and hand detection with MediaPipe, reused from TP2.
+# - faces: same FaceDetector and same model (blaze_face_short_range.tflite) as face_tracking.py,
+#   created the same way (BaseOptions -> FaceDetectorOptions -> create_from_options)
+# - hands: HandLandmarker from MediaPipe, for the hand tracking part of TP2
+
 """Wrapper for Vision tasks: OpenCV for robust Face tracking, MediaPipe for Hands."""
 import cv2
 import mediapipe as mp

@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+# Based on STK_input_server.py given in TP0 (Michael Ortega).
+# Changes for the project:
+#  - must be run with sudo on linux (the keyboard lib needs root)
+#  - single press commands use human_tap instead of press_and_release
+
 import sys
 import os
 import time
