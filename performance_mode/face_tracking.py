@@ -1,10 +1,3 @@
-######################################################################################
-# from TP2 (base: face_tracking.py).                                                 #
-# MediaPipe FaceDetector (BlazeFace, LIVE_STREAM mode) as in the TP.                 #
-# The 3D head position (TP2 Part 4) is sent with OSC (TP2 Part 5) to main.py,        #
-# which uses it to accelerate / brake / rescue.                                      #
-######################################################################################
-
 import sys
 import time
 import math
@@ -17,43 +10,23 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-# focal length of our webcam, measured with calibrate.py
+
 fl = 407
-
-################## TP2 Part 4: 3D position ##################
-# height of the screen in cm
 screen_heigth = 25
-# our interpupillary distance in cm (can be given as argument, like in the TP)
 user_ipd = 6.2
-
 if len(sys.argv) >= 2:
   user_ipd = float(sys.argv[1])
-
-# TP2 Part 5: OSC address and port of the computer running main.py
-# (in the TP it was 127.0.0.1:7000)
 address = "10.250.39.171"
 port = 8000
 clientOSC = OSCClient(address, port)
-
-# capture frames from a camera and the time 
 cap = cv2.VideoCapture(0)
 first_time = time.time()*1000.0
-
-# get image size
 frame_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 frame_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
-################# TP2 Part 1: MediaPipe face detector (code given in the TP) #################
-
 class TrackingResults:
-  """
-  Holds the results from the face tracking model.
-  """
   tracking_results = None
   def get_result(self, result: vision.FaceDetectorResult, output_image: mp.Image, timestamp_ms: int):
-      """
-      Callback to retrieve the tracking result from the face detector.
-      """
       self.tracking_results = result
     
 res = TrackingResults()
@@ -75,15 +48,10 @@ TEXT_COLOR = (255, 0, 0)  # red
 def _normalized_to_pixel_coordinates(
     normalized_x: float, normalized_y: float, image_width: int,
     image_height: int) -> Union[None, Tuple[int, int]]:
-  """
-  Converts normalized value pair to pixel coordinates.
-  """
+  """Converts normalized value pair to pixel coordinates."""
 
   # Checks if the float value is between 0 and 1.
   def is_valid_normalized_value(value: float) -> bool:
-    """
-    Checks if a normalized value is valid.
-    """
     return (value > 0 or math.isclose(0, value)) and (value < 1 or
                                                       math.isclose(1, value))
 
@@ -99,9 +67,7 @@ def visualize(
     image,
     detection_result
 ) -> np.ndarray:
-  """
-  Draws bounding boxes and keypoints on the input image.
-  """
+  
   annotated_image = image.copy()
   height, width, _ = image.shape
 
@@ -112,7 +78,6 @@ def visualize(
     start_point = bbox.origin_x, bbox.origin_y
     end_point = bbox.origin_x + bbox.width, bbox.origin_y + bbox.height
 
-    # BlazeFace keypoints: 0 and 1 = eyes (green), 2 = nose tip (blue)
     i=0
     for keypoint in detection.keypoints:
       i+=1
@@ -138,11 +103,9 @@ def visualize(
 
   return annotated_image
 
-######################### TP2 Part 4: compute the 3D position ###########################
+
 def compute3DPos(ibe_x,ibe_y, rec_ipd):
-  """
-  Computes the 3D position of the head based on image coordinates and IPD.
-  """
+  
   z = int((fl*user_ipd)/rec_ipd)
   x = (ibe_x - (frame_width/2) )*z/fl
   y = (ibe_y - (frame_height/2)) *z/fl
@@ -152,13 +115,35 @@ def compute3DPos(ibe_x,ibe_y, rec_ipd):
   return (centered_x, centered_y, centered_z)
 
 
+def select_closest_to_center(detections, frame_w, frame_h):
+  """Renvoie la détection dont le centre de la bounding box est le plus
+  proche du centre de l'image (au lieu de choisir arbitrairement)."""
+  if not detections:
+    return None
 
-################################ main function ##############################
+  center_x = frame_w / 2
+  center_y = frame_h / 2
+
+  closest_detection = None
+  closest_dist_sq = None
+
+  for detection in detections:
+    bbox = detection.bounding_box
+    det_center_x = bbox.origin_x + bbox.width / 2
+    det_center_y = bbox.origin_y + bbox.height / 2
+    dist_sq = (det_center_x - center_x) ** 2 + (det_center_y - center_y) ** 2
+
+    if closest_dist_sq is None or dist_sq < closest_dist_sq:
+      closest_dist_sq = dist_sq
+      closest_detection = detection
+
+  return closest_detection
+
+
+
+################################ main fonction ##############################
   
 def runtracking():
-  """
-  Main loop to capture frames and perform face tracking continuously.
-  """
 
   print("\nTracking started !!!")
   print("Hit ESC key to quit...")
@@ -173,19 +158,9 @@ def runtracking():
     detector.detect_async(mp_image, frame_timestamp_ms)
 
     if res.tracking_results != None:
-      
-      if len(res.tracking_results.detections)>1:
-        max_size=0
-        n_detection_saved=0
-        for n in range(len(res.tracking_results.detections)):
-          detection=res.tracking_results.detections[n]
-          if max_size<detection.bounding_box.origin_x*detection.bounding_box.origin_y:
-            max_size= detection.bounding_box.origin_x*detection.bounding_box.origin_y
-        saved_detection = res.tracking_results.detections[n]
-      elif len(res.tracking_results.detections)==1: 
-        saved_detection = res.tracking_results.detections[0]
-      else : 
-        saved_detection=None
+
+      saved_detection = select_closest_to_center(
+          res.tracking_results.detections, frame_width, frame_height)
 
       if saved_detection is not None:
         left_eye = saved_detection.keypoints[0]
@@ -206,7 +181,7 @@ def runtracking():
           ################### Part 5: send the head position with OSC ######################
           clientOSC.send_message(b'/tracker/head/pos_xyz', [x, y, z])
   
-      # Display an image in a window (you can avoid displaying the image to improve the performance)
+      # Display an image in a window (you can avoid to display the image to improve the performance)
       annotated_image = mp_image.numpy_view()
       annotated_image = visualize(annotated_image, res.tracking_results)
       bgr_annotated_image = cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
