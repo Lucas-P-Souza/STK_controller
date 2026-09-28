@@ -18,8 +18,8 @@ One player, the goal is to drive fast and precisely.
 - **Accelerate / Brake:** horizontal position of the head, tracked with the webcam (`face_tracking.py`). The head in the center accelerates, leaning to one side brakes.
 - **Rescue:** move the head very close to the camera.
 - **Drift:** touch the Pad of MultiSense OSC.
-- **Fire Item (Arduino):** put your hand in front of the ultrasonic sensor (less than 5 cm).
-- **Nitro (Arduino):** cover the light sensor.
+- **Fire Item (Arduino):** put your left foot in front of the ultrasonic sensor (less than 5 cm).
+- **Nitro (Arduino):** cover the light sensor with your right foot.
 
 ```mermaid
 flowchart TD
@@ -57,14 +57,14 @@ flowchart TD
 ```
 
 ### B. Collaboration Mode (`coop_mode/`)
-A co-op mode for 3 players in front of the webcam. Players have to coordinate because the driving tasks are split between them.
+A co-op mode for 2 or 3 players in front of the webcam. Players have to coordinate because the driving tasks are split between them.
 
 - **Steering (Camera):** players stand on the left and right sides of the webcam. The left player covers their eyes to steer left, and the right player covers their eyes to steer right.
 - **Rescue:** all active players must cover their eyes at the same time to call the rescue bird.
 - **Acceleration & Braking (Arduino):** one player turns a DC motor by hand. Forward to accelerate, backward to brake.
 - **Fire Item (Arduino):** a mini basketball hoop with an ultrasonic sensor. You have to score a basket to fire an item.
 - **Nitro (Arduino):** press 3 buttons the required number of times. When the 3 LEDs are on, a buzzer sounds and the nitro fires in-game.
-- **Drift (Arduino):** touch sensor.
+- **Drift (Arduino):** Touch sensor integrated into the created controller.
 
 Press `2` or `3` in the video window to choose the number of players.
 
