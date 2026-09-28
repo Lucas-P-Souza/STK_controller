@@ -1,3 +1,8 @@
+# Performance mode:
+#  - steering with the phone orientation (TP1 part 2b + continuous commands of TP1 part 4)
+#  - accelerate / brake / rescue with the head position sent by face_tracking.py (TP2)
+#  - drift / lookback with the Pad of MultiSense (TP0, TP1)
+#  - fire and nitro with the Arduino (new for the project)
 
 #------ IMPORT ------
  
@@ -95,7 +100,10 @@ def dump(address, *values):
  
  
 #------ CLASS PULSE SEND MSG-----
- 
+
+# TP1 part 4 (continuous commands): pressed and released are sent one after the other.
+# value close to 1 -> long time pressed (t1), short time released (t2)
+# value close to 0 -> short time pressed, long time released
 class PulsedCommand:
  
     def __init__(self, pressed_cmd, released_cmd):

@@ -1,3 +1,10 @@
+######################################################################################
+# from TP2 (base: face_tracking.py).                                                 #
+# MediaPipe FaceDetector (BlazeFace, LIVE_STREAM mode) as in the TP.                 #
+# The 3D head position (TP2 Part 4) is sent with OSC (TP2 Part 5) to main.py,        #
+# which uses it to accelerate / brake / rescue.                                      #
+######################################################################################
+
 import sys
 import time
 import math
@@ -10,7 +17,7 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-
+# focal length of our webcam, measured with calibrate.py
 fl = 407
 screen_heigth = 25
 user_ipd = 6.2
@@ -24,6 +31,7 @@ first_time = time.time()*1000.0
 frame_width  = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 frame_height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
+################# TP2 Part 1: MediaPipe face detector (code given in the TP) #################
 class TrackingResults:
   tracking_results = None
   def get_result(self, result: vision.FaceDetectorResult, output_image: mp.Image, timestamp_ms: int):
@@ -103,7 +111,7 @@ def visualize(
 
   return annotated_image
 
-
+######################### TP2 Part 4: compute the 3D position ###########################
 def compute3DPos(ibe_x,ibe_y, rec_ipd):
   
   z = int((fl*user_ipd)/rec_ipd)
@@ -114,7 +122,8 @@ def compute3DPos(ibe_x,ibe_y, rec_ipd):
   centered_z = int(z)
   return (centered_x, centered_y, centered_z)
 
-
+# TP2 Part 2 asks to keep one face when several are detected:
+# we keep the one closest to the center of the image
 def select_closest_to_center(detections, frame_w, frame_h):
   """Renvoie la détection dont le centre de la bounding box est le plus
   proche du centre de l'image (au lieu de choisir arbitrairement)."""
