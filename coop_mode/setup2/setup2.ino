@@ -38,11 +38,11 @@ long readUltrasonic(int pin) {
 
   pinMode(pin, INPUT);
   long duration = pulseIn(pin, HIGH, 30000);
-  return duration;
+  return duration; 
 }
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(9600) ;
   pinMode(bt1, INPUT_PULLUP);
   pinMode(bt2, INPUT_PULLUP);
   pinMode(bt3, INPUT_PULLUP);

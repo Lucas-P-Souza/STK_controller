@@ -62,12 +62,13 @@ A co-op mode for 2 or 3 players in front of the webcam. Players have to coordina
 
 - **Steering (Camera):** players stand on the left and right sides of the webcam. The left player covers their eyes to steer left, and the right player covers their eyes to steer right.
 - **Rescue:** all active players must cover their eyes at the same time to call the rescue bird.
+- **Lookback:** the left player (Player 1) can raise both of their hands above their face level to trigger the rear-view camera.
 - **Acceleration & Braking (Arduino):** one player turns a DC motor by hand. Forward to accelerate, backward to brake.
 - **Fire Item (Arduino):** a mini basketball hoop with an ultrasonic sensor. You have to score a basket to fire an item.
 - **Nitro (Arduino):** press 3 buttons the required number of times. When the 3 LEDs are on, a buzzer sounds and the nitro fires in-game.
 - **Drift (Arduino):** Touch sensor integrated into the created controller.
 
-Press `2` or `3` in the video window to choose the number of players.
+Press `2` or `3` in the video window to choose the number of players. Press `f` to toggle fullscreen.
 
 ```mermaid
 flowchart TD
@@ -148,13 +149,46 @@ python3 coop_mode/src/main.py
 
 ---
 
-## 7. Documentation
+---
+
+## 7. How to Run (Performance Mode) ⏱️
+
+### Step 1: Start the Emulation Server (Root required)
+
+In **Terminal 1**:
+
+```bash
+sudo /path/to/your/venv/bin/python performance_mode/STK_input_server.py
+```
+
+### Step 2: Start the Game Client
+
+In **Terminal 2** (make sure your `venv` is activated):
+
+```bash
+# Remember to configure your smartphone's OSC app to your computer's IP on port 8000!
+python3 performance_mode/main.py
+```
+
+### Step 3: Start Face Tracking
+
+In **Terminal 3** (make sure your `venv` is activated):
+
+```bash
+python3 performance_mode/face_tracking.py
+```
+
+*Note: The camera interface will open automatically. Press `q` or `ESC` in the video window to quit.*
+
+---
+
+## 8. Documentation
 
 We made sure to document all the core Python modules and classes (like `PulsedCommand`, `VisionTracker`, etc.) using standard docstrings. Because of this, the technical documentation can be easily extracted using tools like Sphinx or pydoc.
 
 ---
 
-## 8. Team & Contributions 👥
+## 9. Team & Contributions 👥
 
 This project was developed collaboratively by our group. The workload was divided equally among all members, with tasks distributed based on each person's specific domain knowledge and strengths (e.g., computer vision, hardware/Arduino logic, network communication, and system architecture).
 

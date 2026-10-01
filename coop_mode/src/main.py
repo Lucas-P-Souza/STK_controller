@@ -52,6 +52,11 @@ def main():
 
     print("Server running. Press '2' for 2-player mode, '3' for 3-player mode. 'q' to quit.")
 
+    # Create a normal resizable window, move to primary monitor, and make it large
+    cv2.namedWindow('STK Vision Controller', cv2.WINDOW_NORMAL)
+    cv2.moveWindow('STK Vision Controller', 0, 0)
+    cv2.resizeWindow('STK Vision Controller', 1280, 720)
+
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -106,6 +111,13 @@ def main():
         key = cv2.waitKey(1) & 0xFF
         if key == ord('q'):
             break
+        elif key == ord('f'):
+            # Toggle fullscreen mode
+            current_prop = cv2.getWindowProperty('STK Vision Controller', cv2.WND_PROP_FULLSCREEN)
+            if current_prop == cv2.WINDOW_FULLSCREEN:
+                cv2.setWindowProperty('STK Vision Controller', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
+            else:
+                cv2.setWindowProperty('STK Vision Controller', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         elif key == ord('2'):
             logic.set_player_mode(2)
         elif key == ord('3'):

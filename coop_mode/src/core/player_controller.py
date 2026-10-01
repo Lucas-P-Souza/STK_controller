@@ -1,4 +1,3 @@
-# Players logic: which face is which player, are the eyes covered, which keys to send
 """Core game logic: Boxes, NMS filter, and Point-in-Box collision."""
 from src import config
 
@@ -22,8 +21,6 @@ class PlayerStateController:
         self.pwm_counter = 0
 
     def _extract_eye_coords(self, face_box):
-        # in TP2 (Part 2) the eyes came from the BlazeFace keypoints,
-        # here they are placed in the face box: 30% and 70% of the width, 35% of the height
         """Extracts approximate eye coordinates from a face bounding box."""
         x, y, w, h = face_box
         eye_y = int(y + h * config.EYE_HEIGHT_RATIO)
@@ -47,7 +44,7 @@ class PlayerStateController:
                 if not is_inside:
                     filtered_faces.append(face_box)
             
-            #keep the biggest faces (closest people), like "get the biggest face" in TP2
+            # Prioritize closest faces
             filtered_faces = sorted(filtered_faces, key=lambda f: f[2]*f[3], reverse=True)[:self.active_players]
 
             if len(filtered_faces) == self.active_players:
@@ -63,7 +60,6 @@ class PlayerStateController:
                     self.memory[i]['nose_x'] = (face_box[0] + face_box[2]/2) / width
                     self.memory[i]['ttl'] = config.MEMORY_TTL_FRAMES
             else:
-                # some faces are missing (hidden by the hands): each face goes to the closest known player
                 for face_box in filtered_faces:
                     nose_x = (face_box[0] + face_box[2]/2) / width
                     best_match = -1
@@ -131,11 +127,25 @@ class PlayerStateController:
                     self.memory[i]['box'] = ()
                     self.memory[i]['nose_x'] = -1.0 
 
-        return self._evaluate_action(player_status)
+        # --- LOOKBACK FEATURE FOR PLAYER 1 (Left Guy) ---
+        lookback_triggered = False
+        if len(player_hands[0]) >= 2:
+            if self.memory[0]['box']:
+                fx, fy, fw, fh = self.memory[0]['box']
+                raised_count = 0
+                for h_box in player_hands[0]:
+                    hx, hy, hw, hh = h_box
+                    h_cy = hy + hh/2
+                    f_cy = fy + fh/2
+                    # Consider raised if the center of the hand is physically higher than the center of the face
+                    if h_cy < f_cy:
+                        raised_count += 1
+                if raised_count >= 2:
+                    lookback_triggered = True
 
-    def _evaluate_action(self, status):
-        # left player covers his eyes -> left, right player -> right, everybody -> rescue
+        return self._evaluate_action(player_status, lookback_triggered)
 
+    def _evaluate_action(self, status, lookback_triggered=False):
         """Evaluates collision status to determine the steering action."""
         left_covered = status[0]
         rescue_condition = False
@@ -161,7 +171,7 @@ class PlayerStateController:
             # Block steering during rescue
             self.steering_val *= 0.8
         
-        # Continuous Steering (Float calculation), steering value between -1 (left) and 1 (right)
+        # Continuous Steering (Float calculation)
         is_turning = False
         if not rescue_condition:
             if self.active_players == 3:
@@ -186,9 +196,6 @@ class PlayerStateController:
             if not is_turning:
                 self.steering_val = 0.0
 
-            # pressed / released pulses, same idea as TP1 part 4 but counted in frames:
-            # in a window of PWM_WINDOW_FRAMES frames, the key is pressed and released the rest of the time
-
             # --- PWM Key Output Logic ---
             self.pwm_counter = (self.pwm_counter + 1) % config.PWM_WINDOW_FRAMES
             active_keys.extend(["R_LEFT", "R_RIGHT"]) # Default release
@@ -203,5 +210,13 @@ class PlayerStateController:
                 if self.pwm_counter < duty_frames:
                     active_keys.remove("R_RIGHT")
                     active_keys.append("P_RIGHT")
+
+        if lookback_triggered:
+            active_keys.append("P_LOOKBACK")
+            if not rescue_condition and not is_turning:
+                action_text = "LOOK_BACK"
+                action_color = config.COLOR_ORANGE
+        else:
+            active_keys.append("R_LOOKBACK")
 
         return action_text, action_color, self.steering_val, active_keys
