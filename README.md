@@ -21,7 +21,7 @@ One player, the goal is to drive fast and precisely.
 - **Fire Item (Arduino):** put your left foot in front of the ultrasonic sensor (less than 5 cm).
 - **Nitro (Arduino):** cover the light sensor with your right foot.
 
-- Important information: don't forget to update your address by your pc's ip in face_tracking.py (example : address = "192.168.x.xxx") 
+- Important information: don't forget to update your address by your pc's ip in `face_tracking.py` line 26 (example : address = "192.168.x.xxx") 
 
 ```mermaid
 flowchart TD
