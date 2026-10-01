@@ -15,7 +15,7 @@ import threading
 import queue
  
 #------ ARDUINO ------
-SERIAL_PORT = "COM4"
+SERIAL_PORT = "/dev/ttyACM0"
 BAUD_RATE = 9600
 try:
     ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)

@@ -23,7 +23,7 @@ screen_heigth = 25
 user_ipd = 6.2
 if len(sys.argv) >= 2:
   user_ipd = float(sys.argv[1])
-address = "10.250.39.171"
+address = "127.0.0.1"
 port = 8000
 clientOSC = OSCClient(address, port)
 cap = cv2.VideoCapture(0)
@@ -40,7 +40,7 @@ class TrackingResults:
 res = TrackingResults()
 
 # Create a face detector instance with the live stream mode:
-base_options = python.BaseOptions(model_asset_path='blaze_face_short_range.tflite')
+base_options = python.BaseOptions(model_asset_path='coop_mode/assets/models/blaze_face_short_range.tflite')
 options = vision.FaceDetectorOptions(
   base_options=base_options,
   running_mode=vision.RunningMode.LIVE_STREAM,

@@ -21,7 +21,6 @@ One player, the goal is to drive fast and precisely.
 - **Fire Item (Arduino):** put your left foot in front of the ultrasonic sensor (less than 5 cm).
 - **Nitro (Arduino):** cover the light sensor with your right foot.
 
-- Important information: don't forget to update your address by your pc's ip in `face_tracking.py` line 26 (example : address = "192.168.x.xxx") 
 
 ```mermaid
 flowchart TD
@@ -152,3 +151,14 @@ python3 coop_mode/src/main.py
 ## 7. Documentation
 
 We made sure to document all the core Python modules and classes (like `PulsedCommand`, `VisionTracker`, etc.) using standard docstrings. Because of this, the technical documentation can be easily extracted using tools like Sphinx or pydoc.
+
+---
+
+## 8. Team & Contributions 👥
+
+This project was developed collaboratively by our group. The workload was divided equally among all members, with tasks distributed based on each person's specific domain knowledge and strengths (e.g., computer vision, hardware/Arduino logic, network communication, and system architecture).
+
+**Team Members:**
+- Lucas DE PAULA SOUZA
+- Alexandre LAISSY
+- Mathys Vermeulen
